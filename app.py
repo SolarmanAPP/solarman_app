@@ -1,16 +1,14 @@
 import streamlit as st
+from fpdf import FPDF
+import tempfile
+import os
 
-# Set app layout
 st.set_page_config(page_title="SolarMan", layout="centered")
-
-# App title
 st.title("☀️ SolarMan Solar Quote Estimator")
 
-# Homeowner inputs
 address = st.text_input("🏠 Enter your home address:")
 roof_sqft = st.number_input("📐 Available roof square footage:", min_value=0)
 
-# Estimations
 sqft_per_panel = 17.5
 watts_per_panel = 400
 
@@ -35,5 +33,31 @@ WA License: NORTHPE759BS
 Walter Struckman  
 📞 206-712-4212  
 📧 wstruckmannpe@gmail.com""")
+
+    # PDF Generation
+    if st.button("📄 Download Quote as PDF"):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="SolarMan Solar Quote", ln=True, align="C")
+        pdf.ln(10)
+        pdf.cell(200, 10, txt=f"Address: {address}", ln=True)
+        pdf.cell(200, 10, txt=f"Roof Area: {roof_sqft} sqft", ln=True)
+        pdf.cell(200, 10, txt=f"System Size: {system_kw} kW", ln=True)
+        pdf.cell(200, 10, txt=f"Total Cost: ${total_cost:,.2f}", ln=True)
+        pdf.cell(200, 10, txt=f"Est. Monthly Payment: ${est_monthly}/mo", ln=True)
+        pdf.ln(10)
+        pdf.cell(200, 10, txt="Installed by Northern Pacific Electric", ln=True)
+        pdf.cell(200, 10, txt="WA License: NORTHPE759BS", ln=True)
+        pdf.cell(200, 10, txt="Walter Struckman", ln=True)
+        pdf.cell(200, 10, txt="Phone: 206-712-4212", ln=True)
+        pdf.cell(200, 10, txt="Email: wstruckmannpe@gmail.com", ln=True)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            pdf.output(tmp_file.name)
+            st.success("PDF generated!")
+            with open(tmp_file.name, "rb") as f:
+                st.download_button("⬇️ Download PDF", data=f, file_name="solarman_quote.pdf", mime="application/pdf")
+            os.remove(tmp_file.name)
 else:
     st.info("Enter roof size to generate your quote.")

@@ -4,7 +4,6 @@ import os
 
 st.set_page_config(page_title="SolarMan - Full App", layout="wide")
 
-# Define tabs
 tab1, tab2, tab3 = st.tabs(["🏠 Home", "📊 Estimate", "💰 Financing Options"])
 
 with tab1:
@@ -46,7 +45,7 @@ with tab2:
                 potential = solar_data["solarPotential"]
                 panels = potential.get("maxArrayPanelsCount", "N/A")
                 area_m2 = potential.get("maxArrayAreaMeters2", 0)
-                kw_capacity = area_m2 * 0.15  # assume 150W/m²
+                kw_capacity = area_m2 * 0.15
                 sunlight_hours = potential.get("maxSunshineHoursPerYear", 1600) / 365
 
                 st.markdown("### ☀️ Solar Estimate Summary")
@@ -59,7 +58,7 @@ with tab2:
 
                 bill_kwh = st.number_input("📄 Optional: Enter your monthly utility usage (kWh)", min_value=0)
                 if bill_kwh > 0:
-                    needed_panels = round((bill_kwh / (sunlight_hours * 30)) / 0.4)  # 400W per panel
+                    needed_panels = round((bill_kwh / (sunlight_hours * 30)) / 0.4)
                     st.success(f"You'd need approximately **{needed_panels} panels** to offset your bill.")
             else:
                 st.error("No solar data available for this location.")
@@ -77,8 +76,8 @@ with tab3:
 
 | Loan Provider | Term | Rate | Est. Monthly for $25,000 |
 |---------------|------|------|---------------------------|
-| GoodLeap | 25 yr | 4.99% | ~$145/mo |
-| Sunlight Financial | 20 yr | 5.49% | ~$165/mo |
+| [GoodLeap](https://www.goodleap.com/) | 25 yr | 4.99% | ~$145/mo |
+| [Sunlight Financial](https://sunlightfinancial.com/partner-with-us/) | 20 yr | 5.49% | ~$165/mo |
 | [🌟 **PSCCU Solar Financing Options (Preferred)**](https://www.psccu.org/loans/solar-loans.html) | 15 yr | 4.24% | ~$187/mo |
 
 ---

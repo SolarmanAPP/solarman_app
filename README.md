@@ -1,1 +1,1 @@
-SolarMan App with Financing Tab included.
+SolarMan Full App with Estimate, Address Input, and Financing Tabs

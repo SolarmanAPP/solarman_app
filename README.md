@@ -1,10 +1,17 @@
-# SolarMan App ☀️ with Google Maps Geocoding + PDF Export
+# SolarMan App ☀️ - Solar API Edition
 
-A Streamlit app that:
-- Gets coordinates from a user's address using Google Maps Geocoding API
-- Simulates roof square footage
-- Generates solar quote + PDF download
-- Uses environment variables for security
+This version of the SolarMan app integrates with the Google Solar API to provide real-time data on roof shading, azimuth, and optimal panel placement.
 
-Add your API key in Streamlit Cloud under app "Secrets":
-GOOGLE_MAPS_API_KEY = "your-key"
+## Features:
+- Geocode home address to lat/lon
+- Query Solar API for solar potential
+- Estimate system size, panel count, and bill offset
+- Dynamic kWh-to-panel recommendation
+
+## Setup:
+Add the following keys to your Streamlit Secrets:
+
+```toml
+GOOGLE_MAPS_API_KEY = "your-maps-api-key"
+GOOGLE_SOLAR_API_KEY = "your-solar-api-key"
+```

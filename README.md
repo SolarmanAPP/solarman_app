@@ -1,1 +1,1 @@
-SolarMan Full App with clickable loan provider links.
+SolarMan Full App v3 with corrected Sunlight Financial homeowner application link.

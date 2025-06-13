@@ -77,7 +77,7 @@ with tab3:
 | Loan Provider | Term | Rate | Est. Monthly for $25,000 |
 |---------------|------|------|---------------------------|
 | [GoodLeap](https://www.goodleap.com/) | 25 yr | 4.99% | ~$145/mo |
-| [Sunlight Financial](https://sunlightfinancial.com/partner-with-us/) | 20 yr | 5.49% | ~$165/mo |
+| [Sunlight Financial – Homeowner Application](https://sunlightfinancial.com/homeowners/) | 20 yr | 5.49% | ~$165/mo |
 | [🌟 **PSCCU Solar Financing Options (Preferred)**](https://www.psccu.org/loans/solar-loans.html) | 15 yr | 4.24% | ~$187/mo |
 
 ---

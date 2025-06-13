@@ -1,15 +1,13 @@
-# SolarMan App ☀️ - Solar API Edition
+# SolarMan App ☀️ - Solar API with Estimate Tab
 
-This version of the SolarMan app integrates with the Google Solar API to provide real-time data on roof shading, azimuth, and optimal panel placement.
+This version of the SolarMan app includes:
 
-## Features:
-- Geocode home address to lat/lon
-- Query Solar API for solar potential
-- Estimate system size, panel count, and bill offset
-- Dynamic kWh-to-panel recommendation
+- Address input for Google Solar API
+- Solar estimate (kW, daily sun, panel count)
+- Utility bill upload feature for future AI analysis
 
 ## Setup:
-Add the following keys to your Streamlit Secrets:
+Add these to Streamlit Secrets:
 
 ```toml
 GOOGLE_MAPS_API_KEY = "your-maps-api-key"

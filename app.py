@@ -1,90 +1,78 @@
 import streamlit as st
-from fpdf import FPDF
-import tempfile
-import os
 import requests
+import os
 
-st.set_page_config(page_title="SolarMan", layout="centered")
-st.title("☀️ SolarMan Solar Quote Estimator")
+st.set_page_config(page_title="SolarMan - Solar Estimate", layout="centered")
 
-address = st.text_input("🏠 Enter your home address:")
+st.title("🔆 SolarMan: Solar Estimate Tool")
 
-def get_lat_lon_from_address(address, api_key):
-    endpoint = "https://maps.googleapis.com/maps/api/geocode/json"
-    params = {"address": address, "key": api_key}
-    response = requests.get(endpoint, params=params)
-    if response.status_code == 200:
-        data = response.json()
-        if data["results"]:
-            location = data["results"][0]["geometry"]["location"]
-            return location["lat"], location["lng"]
-    return None, None
+tabs = st.tabs(["🏠 Home", "📊 Estimate", "📎 Upload Utility Bill"])
 
-def simulate_roof_sqft_from_coords(lat, lon):
-    if lat is not None and lon is not None:
-        return int(300 + abs(lat * lon) % 900)  # Simulate 300–1200 sqft
-    return None
+with tabs[0]:
+    st.header("Welcome to SolarMan")
+    st.write("Use the tabs above to estimate your solar system potential or upload your utility bill.")
 
-api_key = os.getenv("GOOGLE_MAPS_API_KEY")
+with tabs[1]:
+    st.header("📊 Solar Potential Estimate")
+    address = st.text_input("Enter your home address for solar analysis:")
 
-sqft_per_panel = 17.5
-watts_per_panel = 400
+    # Load secrets
+    maps_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    solar_key = os.getenv("GOOGLE_SOLAR_API_KEY")
 
-if address and api_key:
-    lat, lon = get_lat_lon_from_address(address, api_key)
-    if lat is not None:
-        st.success(f"📍 Location found: ({lat:.5f}, {lon:.5f})")
-        roof_sqft = simulate_roof_sqft_from_coords(lat, lon)
-        st.markdown(f"### 📐 Estimated Roof Area from Google Maps: **{roof_sqft} sqft**")
+    def geocode_address(address, maps_key):
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
+        params = {"address": address, "key": maps_key}
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            if data["results"]:
+                location = data["results"][0]["geometry"]["location"]
+                return location["lat"], location["lng"]
+        return None, None
 
-        num_panels = roof_sqft / sqft_per_panel
-        system_kw = round((num_panels * watts_per_panel) / 1000, 2)
-        cost_per_watt = 3.50
-        total_cost = round(system_kw * 1000 * cost_per_watt, 2)
-        est_monthly = round(total_cost * 0.015, 2)
+    def get_solar_data(lat, lon, solar_key):
+        url = f"https://solar.googleapis.com/v1/buildingInsights:findClosest?location.latitude={lat}&location.longitude={lon}&key={solar_key}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        return None
 
-        st.markdown("### 🔧 System Estimate")
-        st.write(f"System size: **{system_kw} kW**")
-        st.write(f"Estimated total cost: **${total_cost:,.2f}**")
+    if address and maps_key and solar_key:
+        lat, lon = geocode_address(address, maps_key)
+        if lat and lon:
+            st.success(f"📍 Location found: ({lat:.5f}, {lon:.5f})")
+            solar_data = get_solar_data(lat, lon, solar_key)
+            if solar_data and "solarPotential" in solar_data:
+                potential = solar_data["solarPotential"]
+                panels = potential.get("maxArrayPanelsCount", "N/A")
+                area_m2 = potential.get("maxArrayAreaMeters2", 0)
+                kw_capacity = area_m2 * 0.15  # assume 150W/m²
+                sunlight_hours = potential.get("maxSunshineHoursPerYear", 1600) / 365
 
-        st.markdown("### 💰 Financing Option")
-        st.write(f"Est. monthly payment (20 years): **${est_monthly}/mo**")
+                st.markdown("### ☀️ Solar Estimate Summary")
+                st.write(f"**Max system size:** {kw_capacity:.2f} kW")
+                st.write(f"**Estimated max panels:** {panels}")
+                st.write(f"**Average daily sunlight:** {sunlight_hours:.1f} hours/day")
 
-        st.markdown("---")
-        st.markdown("""**Northern Pacific Electric**  
-WA License: NORTHPE759BS  
-Walter Struckman  
-📞 206-712-4212  
-📧 wstruckmannpe@gmail.com""")
+                monthly_kwh = kw_capacity * sunlight_hours * 30
+                st.write(f"**Estimated monthly production:** {monthly_kwh:.0f} kWh/month")
 
-        if st.button("📄 Download Quote as PDF"):
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            pdf.cell(200, 10, txt="SolarMan Solar Quote", ln=True, align="C")
-            pdf.ln(10)
-            pdf.cell(200, 10, txt=f"Address: {address}", ln=True)
-            pdf.cell(200, 10, txt=f"Lat/Lon: {lat:.5f}, {lon:.5f}", ln=True)
-            pdf.cell(200, 10, txt=f"Roof Area (estimated): {roof_sqft} sqft", ln=True)
-            pdf.cell(200, 10, txt=f"System Size: {system_kw} kW", ln=True)
-            pdf.cell(200, 10, txt=f"Total Cost: ${total_cost:,.2f}", ln=True)
-            pdf.cell(200, 10, txt=f"Est. Monthly Payment: ${est_monthly}/mo", ln=True)
-            pdf.ln(10)
-            pdf.cell(200, 10, txt="Installed by Northern Pacific Electric", ln=True)
-            pdf.cell(200, 10, txt="WA License: NORTHPE759BS", ln=True)
-            pdf.cell(200, 10, txt="Walter Struckman", ln=True)
-            pdf.cell(200, 10, txt="Phone: 206-712-4212", ln=True)
-            pdf.cell(200, 10, txt="Email: wstruckmannpe@gmail.com", ln=True)
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-                pdf.output(tmp_file.name)
-                st.success("PDF generated!")
-                with open(tmp_file.name, "rb") as f:
-                    st.download_button("⬇️ Download PDF", data=f, file_name="solarman_quote.pdf", mime="application/pdf")
-                os.remove(tmp_file.name)
+                bill_kwh = st.number_input("📄 Optional: Enter your monthly utility usage (kWh)", min_value=0)
+                if bill_kwh > 0:
+                    needed_panels = round((bill_kwh / (sunlight_hours * 30)) / 0.4)  # 400W per panel estimate
+                    st.success(f"You'd need approximately **{needed_panels} panels** to offset your bill.")
+            else:
+                st.error("No solar data available for this location.")
+        else:
+            st.error("Address not found.")
+    elif not maps_key or not solar_key:
+        st.warning("API keys not found. Add them in Streamlit Cloud Secrets.")
     else:
-        st.error("⚠️ Could not locate address. Please check the spelling.")
-elif not api_key:
-    st.warning("🚫 Google Maps API key is not set. Add it to Streamlit Secrets.")
-else:
-    st.info("Enter your home address to begin.")
+        st.info("Enter your address to get a solar estimate.")
+
+with tabs[2]:
+    st.header("📎 Upload Your Utility Bill")
+    uploaded_file = st.file_uploader("Upload a PDF, image, or bill summary (for future AI processing):")
+    if uploaded_file:
+        st.success("✅ File uploaded. In a future release, we will analyze this to size your system automatically.")

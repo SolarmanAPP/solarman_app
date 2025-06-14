@@ -1,47 +1,8 @@
 import streamlit as st
 import requests
 import os
+from fpdf import FPDF
 
-def estimate_solar_financing(area_kwh_month, home_sqft, cost_per_watt=None,
-                              financing_rate=4.5, loan_years=20, tax_credit=0.30):
-    """
-    Estimates solar system cost and monthly payment based on electricity usage and home size.
-
-    Inputs:
-        area_kwh_month (float): user's average monthly electricity usage in kWh
-        home_sqft (float): size of the home in square feet
-        cost_per_watt (float): installed cost per watt ($/W). If None, uses national average.
-        financing_rate (float): annual loan interest rate (in %)
-        loan_years (int): loan term duration in years
-        tax_credit (float): federal solar Investment Tax Credit (ITC) portion (e.g., 0.30 for 30%)
-
-    Returns:
-        dict with keys: system_size_kw, gross_cost, net_cost, monthly_payment
-    """
-
-    # Constants / benchmarks
-    AVG_USAGE_PER_KW = 855  # average US household monthly kWh
-    AVG_COST_PER_WATT = cost_per_watt or 3.00  # $/W range $2.74–$3.30
-
-    # Derive system size needed (kW)
-    normalized_usage = area_kwh_month / AVG_USAGE_PER_KW
-    system_kw = normalized_usage * 11  # average system ~11 kW
-
-    # Cost calculations
-    gross_cost = system_kw * 1000 * AVG_COST_PER_WATT
-    net_cost = gross_cost * (1 - tax_credit)
-
-    # Loan amortization monthly payment
-    r = financing_rate / 100 / 12
-    n = loan_years * 12
-    monthly_payment = (net_cost * r) / (1 - (1 + r)**(-n))
-
-    return {
-        "system_size_kw": round(system_kw, 2),
-        "gross_cost": round(gross_cost, 2),
-        "net_cost_after_incentives": round(net_cost, 2),
-        "estimated_monthly_payment": round(monthly_payment, 2)
-    }
 st.set_page_config(page_title="SolarMan - Full App", layout="wide")
 
 tab1, tab2, tab3 = st.tabs(["🏠 Home", "📊 Estimate", "💰 Financing Options"])
@@ -100,6 +61,26 @@ with tab2:
                 if bill_kwh > 0:
                     needed_panels = round((bill_kwh / (sunlight_hours * 30)) / 0.4)
                     st.success(f"You'd need approximately **{needed_panels} panels** to offset your bill.")
+
+                    # Generate PDF
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", size=12)
+                    pdf.cell(200, 10, txt="Solar Estimate Report", ln=True, align="C")
+                    pdf.ln(10)
+                    pdf.multi_cell(200, 10, txt=f"""Address: {address}
+Latitude: {lat}
+Longitude: {lon}
+Max System Size: {kw_capacity:.2f} kW
+Estimated Panels: {panels}
+Average Daily Sunlight: {sunlight_hours:.1f} hrs/day
+Monthly Production: {monthly_kwh:.0f} kWh/month
+Bill Usage: {bill_kwh} kWh
+Panel Count to Offset: {needed_panels}""")
+                    pdf_path = "/mnt/data/solar_estimate.pdf"
+                    pdf.output(pdf_path)
+                    st.download_button("📄 Download PDF Estimate", data=open(pdf_path, "rb"), file_name="solar_estimate.pdf", mime="application/pdf")
+
             else:
                 st.error("No solar data available for this location.")
         else:
@@ -118,11 +99,9 @@ with tab3:
 |---------------|------|------|---------------------------|
 | [GoodLeap](https://www.goodleap.com/) | 25 yr | 4.99% | ~$145/mo |
 | [Sunlight Financial – Homeowner Application](https://sunlightfinancial.com/homeowners/) | 20 yr | 5.49% | ~$165/mo |
-| [🌟 **PSCCU Solar Financing Options (Preferred)**](https://www.psccu.org/loans/solar-loans.html) | 15 yr | 4.24% | ~$187/mo |
+| [🌟 PSCCU Solar Financing Options (Preferred)](https://www.psccu.org/loans/solar-loans.html) | 15 yr | 4.24% | ~$187/mo |
 
 ---
-
 📎 Click one of the partners to apply, or reach out to your certified installer for help.
-
 📩 Once you’re approved, this section will connect to real-time financing tools and monthly breakdowns.
     """)

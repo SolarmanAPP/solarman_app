@@ -1,1 +1,1 @@
-SolarMan Full App v3 with corrected Sunlight Financial homeowner application link.
+SolarMan app with PDF quote export functionality
